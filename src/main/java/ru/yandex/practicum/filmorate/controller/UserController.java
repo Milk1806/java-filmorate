@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
     @PostMapping
-    public User addUser(@RequestBody User user) {
+    public User addUser(@Valid @RequestBody User user) {
         if (user.getEmail() == null || !(user.getEmail().contains("@"))) {
             log.error("Поле email пустое или нет символа @.");
             throw new ValidationException("Поле email пустое или нет символа @.");
@@ -42,7 +43,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@RequestBody User newUser) {
+    public User updateUser(@Valid @RequestBody User newUser) {
         if (newUser.getId() == null) {
             log.error("Id пользователя должно быть указано.");
             throw new ValidationException("Id пользователя должно быть указано.");
