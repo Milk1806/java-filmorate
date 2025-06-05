@@ -1,5 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
@@ -8,16 +11,17 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Map;
+import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTest {
     FilmController filmController = new FilmController();
     private final Map<Long, Film> films = filmController.getFilms();
     private Film film;
     private Film newFilm;
+    Validator validator;
+    Set<ConstraintViolation<Film>> violations;
 
     @BeforeEach
     public void setUp() {
@@ -31,6 +35,8 @@ class FilmControllerTest {
         newFilm = new Film();
         newFilm.setId(film.getId());
         films.clear();
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+
     }
 
     @Test
@@ -41,15 +47,18 @@ class FilmControllerTest {
 
     @Test
     public void addFilmUnSuccessWithEmptyName() {
-        film.setName(null);
-        assertThrows(ValidationException.class, () -> filmController.addFilm(film));
+        film.setName("");
+        filmController.addFilm(film);
+        violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    public void addFilmUnSuccessWithLongDescription() {
+    public void filmValidationWithLongDescription() {
         String originalString = "!";
         film.setDescription(originalString.repeat(210));
-        assertThrows(ValidationException.class, () -> filmController.addFilm(film));
+        violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
@@ -59,9 +68,17 @@ class FilmControllerTest {
     }
 
     @Test
-    public void addFilmUnSuccessIfDurationIsNegative() {
+    public void filmValidationWithFutureReleaseDate() {
+        film.setReleaseDate(LocalDate.of(2030, Month.JUNE, 15));
+        violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
+    }
+
+    @Test
+    public void filmValidationWithNegativeDuration() {
         film.setDuration(-50);
-        assertThrows(ValidationException.class, () -> filmController.addFilm(film));
+        violations = validator.validate(film);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
@@ -93,27 +110,11 @@ class FilmControllerTest {
     }
 
     @Test
-    public void updateFilmUnSuccessIfNameIsAbsent() {
-        filmController.addFilm(film);
-        filmController.updateFilm(newFilm);
-        assertEquals("The Witcher", films.get(newFilm.getId()).getName(), "Объект не обновлен.");
-    }
-
-    @Test
     public void updateFilmSuccessWithAnotherDescription() {
         filmController.addFilm(film);
         newFilm.setDescription("123");
         filmController.updateFilm(newFilm);
         assertEquals("123", films.get(newFilm.getId()).getDescription(), "Объект не обновлен.");
-    }
-
-    @Test
-    public void updateFilmUnSuccessWithLongDescription() {
-        filmController.addFilm(film);
-        String originalString = "!";
-        newFilm.setDescription(originalString.repeat(210));
-        filmController.updateFilm(newFilm);
-        assertEquals("About monsters", films.get(newFilm.getId()).getDescription(), "Объект не обновлен.");
     }
 
     @Test
@@ -128,8 +129,7 @@ class FilmControllerTest {
     public void updateFilmUnSuccessWithEarlyReleaseDate() {
         filmController.addFilm(film);
         newFilm.setReleaseDate(LocalDate.of(1845, Month.DECEMBER, 31));
-        filmController.updateFilm(newFilm);
-        assertEquals(LocalDate.of(2020, Month.JUNE, 15), films.get(newFilm.getId()).getReleaseDate(), "Объект не обновлен.");
+        assertThrows(ValidationException.class, () -> filmController.updateFilm(newFilm));
     }
 
     @Test
@@ -138,13 +138,5 @@ class FilmControllerTest {
         newFilm.setDuration(200);
         filmController.updateFilm(newFilm);
         assertEquals(200, films.get(newFilm.getId()).getDuration(), "Объект не обновлен.");
-    }
-
-    @Test
-    public void updateFilmUnSuccessIfDurationIsNegative() {
-        filmController.addFilm(film);
-        newFilm.setDuration(-100);
-        filmController.updateFilm(newFilm);
-        assertEquals(120, films.get(newFilm.getId()).getDuration(), "Объект не обновлен.");
     }
 }

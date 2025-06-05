@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -10,7 +10,10 @@ public class Film {
     private Long id;
     @NotBlank
     private String name;
+    @Size(max = 200)
     private String description;
+    @Past
     private LocalDate releaseDate;
-    private int duration;
+    @Min(1)
+    private Integer duration;
 }

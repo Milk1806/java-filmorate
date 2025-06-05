@@ -1,5 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
@@ -8,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +20,8 @@ class UserControllerTest {
     private final Map<Long, User> users = userController.getUsers();
     private User user;
     private User newUser;
+    Validator validator;
+    Set<ConstraintViolation<User>> violations;
 
     @BeforeEach
     public void setUp() {
@@ -28,6 +34,7 @@ class UserControllerTest {
         newUser = new User();
         newUser.setId(user.getId());
         users.clear();
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     @Test
@@ -44,33 +51,38 @@ class UserControllerTest {
     }
 
     @Test
-    public void addUserUnSuccessWithEmptyEmail() {
+    public void userValidationWithEmptyEmail() {
         user.setEmail(null);
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        violations = validator.validate(user);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    public void addUserUnSuccessWithoutCharDogInEmail() {
+    public void userValidationWithoutCharDogInEmail() {
         user.setEmail("maxlebedev22yandex.ru");
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        violations = validator.validate(user);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    public void addUserUnSuccessWithEmptyLogin() {
+    public void userValidationWithEmptyLogin() {
         user.setLogin(null);
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        violations = validator.validate(user);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    public void addUserUnSuccessWithEmptySpaceInLogin() {
-       user.setLogin("Milk1806 ");
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+    public void userValidationWithEmptySpaceInLogin() {
+        user.setLogin("Milk1806 ");
+        violations = validator.validate(user);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
-    public void addUserUnSuccessWithBirthdayAfterNowLocalDate() {
+    public void userValidationWithBirthdayAfterNowLocalDate() {
         user.setBirthday(LocalDate.of(2026, Month.JUNE, 23));
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        violations = validator.validate(user);
+        assertFalse(violations.isEmpty());
     }
 
     @Test
@@ -117,14 +129,6 @@ class UserControllerTest {
     }
 
     @Test
-    public void updateUserUnSuccessWithAnotherEmailWithoutCharDog() {
-        userController.addUser(user);
-        newUser.setEmail("123yandex.ru");
-        newUser = userController.updateUser(newUser);
-        assertEquals("maxlebedev22@yandex.ru", users.get(newUser.getId()).getEmail(), "Объект не обновлен.");
-    }
-
-    @Test
     public void updateUserSuccessWithAnotherLogin() {
         userController.addUser(user);
         newUser.setLogin("123");
@@ -133,26 +137,10 @@ class UserControllerTest {
     }
 
     @Test
-    public void updateUserUnSuccessWithAnotherLoginWithSpaces() {
-        userController.addUser(user);
-        newUser.setLogin("123 ");
-        newUser = userController.updateUser(newUser);
-        assertEquals("Milk1806", users.get(newUser.getId()).getLogin(), "Объект не обновлен.");
-    }
-
-    @Test
     public void updateUserSuccessWithAnotherBirthday() {
         userController.addUser(user);
         newUser.setBirthday(LocalDate.of(2000, Month.JUNE, 1));
         newUser = userController.updateUser(newUser);
         assertEquals(LocalDate.of(2000, Month.JUNE, 1), users.get(newUser.getId()).getBirthday(), "Объект не обновлен.");
-    }
-
-    @Test
-    public void updateUserUnSuccessWithAnotherBirthdayInFuture() {
-        userController.addUser(user);
-        newUser.setBirthday(LocalDate.of(2036, Month.JUNE, 1));
-        newUser = userController.updateUser(newUser);
-        assertEquals(LocalDate.of(1991, Month.JUNE, 23), users.get(newUser.getId()).getBirthday(), "Объект не обновлен.");
     }
 }

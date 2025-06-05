@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -13,7 +12,9 @@ public class User {
     @Email
     private String email;
     @NotBlank
+    @Pattern(regexp = "\\S+", message = "Логин не может содержать пробелы.")
     private String login;
     private String name;
+    @Past
     private LocalDate birthday;
 }
