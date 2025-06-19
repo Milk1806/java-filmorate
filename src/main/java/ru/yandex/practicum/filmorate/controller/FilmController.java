@@ -1,77 +1,70 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
-import java.time.LocalDate;
-import java.time.Month;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-@Getter
 @RestController
 @RequestMapping("/films")
-@Slf4j
 @Validated
+@RequiredArgsConstructor
+@Slf4j
 public class FilmController {
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmStorage filmStorage;
+    private final FilmService filmService;
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
-        film.setId(getNextId());
-        validate(film);
-        films.put(film.getId(), film);
-        log.info("Фильм с id {} добавлен.", film.getId());
-        return film;
+        log.debug("В метод addFilm передан параметр {}", film);
+        return filmStorage.addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film newFilm) {
-        if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
-            oldFilm.setName(newFilm.getName());
-            if (newFilm.getDescription() != null) {
-                oldFilm.setDescription(newFilm.getDescription());
-            }
-            if (newFilm.getReleaseDate() != null) {
-                validate(newFilm);
-                oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            }
-            if (newFilm.getDuration() != null) {
-                oldFilm.setDuration(newFilm.getDuration());
-            }
-            films.put(oldFilm.getId(), oldFilm);
-            log.info("Фильм с id {} обновлен.", oldFilm.getId());
-            return oldFilm;
-        }
-        log.error("Фильм с id {} не найден.", newFilm.getId());
-        throw new ValidationException("Фильма с таким id нет в списке или неверно указан id.");
+        log.debug("В метод updateFilm передан параметр {}", newFilm);
+        return filmStorage.updateFilm(newFilm);
     }
 
     @GetMapping
     public Collection<Film> getAllFilms() {
-        return films.values();
+        return filmStorage.getAllFilms();
     }
 
-    public Long getNextId() {
-        long currentNextId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentNextId;
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        log.debug("В метод getFilmById передан параметр {}", id);
+        return filmStorage.getFilmById(id).get();
     }
 
-    private void validate(Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, Month.DECEMBER, 28))) {
-            log.error("Дата релиза — не раньше 28 декабря 1895 года.");
-            throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года.");
-        }
+    @DeleteMapping
+    public void deleteFilm(@Valid @RequestBody Film film) {
+        log.debug("В метод deleteFilm передан параметр {}", film);
+        filmStorage.deleteFilm(film);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("В метод addLike переданы параметр {}, {}", id, userId);
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void deleteLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.debug("В метод deleteLike переданы параметр {}, {}", id, userId);
+        filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(@RequestParam(value = "count", required = false, defaultValue = "10") Integer count) {
+        log.debug("В метод getPopularFilms передан параметр {}", count);
+        return filmService.getPopularFilms(count);
     }
 }

@@ -1,70 +1,74 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-@Getter
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 @Slf4j
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserStorage userStorage;
+    private final UserService userService;
 
     @PostMapping
     public User addUser(@Valid @RequestBody User user) {
-        validate(user);
-        user.setId(getNextId());
-        users.put(user.getId(), user);
-        log.info("Новый пользователь с номером id {} добавлен.", user.getId());
-        return user;
+        log.debug("В метод addUser передан параметр {}", user);
+        return userStorage.addUser(user);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User newUser) {
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
-            oldUser.setEmail(newUser.getEmail());
-            oldUser.setLogin(newUser.getLogin());
-            if (newUser.getName() != null) {
-                validate(newUser);
-                oldUser.setName(newUser.getName());
-            }
-            if (newUser.getBirthday() != null) {
-                oldUser.setBirthday(newUser.getBirthday());
-            }
-            users.put(oldUser.getId(), oldUser);
-            log.info("Пользователь с номером id {} обновлен.", oldUser.getId());
-            return oldUser;
-        }
-        log.error("Пользователь с id {} не найден.", newUser.getId());
-        throw new ValidationException("Пользователь с таким id не найден.");
+        log.debug("В метод updateUser передан параметр {}", newUser);
+        return userStorage.updateUser(newUser);
     }
 
     @GetMapping
     public Collection<User> getAllUsers() {
-        return users.values();
+        return userStorage.getAllUsers();
     }
 
-    public Long getNextId() {
-        long currentNextId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentNextId;
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        log.debug("В метод getUserById передан параметр {}", id);
+        return userStorage.getUserById(id).get();
     }
 
-    public void validate(User user) {
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
+    @DeleteMapping
+    public void deleteUser(@Valid @RequestBody User user) {
+        log.debug("В метод deleteUser передан параметр {}", user);
+        userStorage.deleteUser(user);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addUserAsFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        log.debug("В метод addUserAsFriend переданы параметр {}, {}", id, friendId);
+        userService.addUserAsFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeUnfriend(@PathVariable Long id, @PathVariable Long friendId) {
+        log.debug("В метод removeUnfriend переданы параметр {}, {}", id, friendId);
+        userService.removeUnfriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getAllFriendsList(@PathVariable Long id) {
+        log.debug("В метод getAllFriendsList передан параметр {}", id);
+        return userService.getAllFriendsList(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getGeneralFriendsList(@PathVariable Long id, @PathVariable Long otherId) {
+        log.debug("В метод getGeneralFriendsList переданы параметр {}, {}", id, otherId);
+        return userService.getGeneralFriendsList(id, otherId);
     }
 }
