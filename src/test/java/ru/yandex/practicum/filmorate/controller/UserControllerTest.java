@@ -5,6 +5,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.exeption.NotFoundException;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
@@ -92,20 +93,20 @@ class UserControllerTest {
     public void updateUserUnSuccessWithAnotherId() {
         userController.addUser(user);
         newUser.setId(2L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test
     public void updateUserUnSuccessWithoutId() {
         userController.addUser(user);
         newUser.setId(null);
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test
     public void updateUserUnSuccessIfUserIdIsMissingInUsersList() {
         newUser.setName("Kate");
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test

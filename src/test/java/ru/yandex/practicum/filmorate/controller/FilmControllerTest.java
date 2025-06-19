@@ -5,6 +5,7 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.filmorate.exeption.NotFoundException;
 import ru.yandex.practicum.filmorate.exeption.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -89,20 +90,20 @@ class FilmControllerTest {
     public void updateFilmUnSuccessWithAnotherId() {
         filmController.addFilm(film);
         newFilm.setId(2L);
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(newFilm));
+        assertThrows(NotFoundException.class, () -> filmController.updateFilm(newFilm));
     }
 
     @Test
     public void updateFilmUnSuccessWithoutId() {
         filmController.addFilm(film);
         newFilm.setId(null);
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(newFilm));
+        assertThrows(NotFoundException.class, () -> filmController.updateFilm(newFilm));
     }
 
     @Test
     public void updateFilmUnSuccessIfFilmIdIsMissingInFilmList() {
         newFilm.setName("Billy");
-        assertThrows(ValidationException.class, () -> filmController.updateFilm(newFilm));
+        assertThrows(NotFoundException.class, () -> filmController.updateFilm(newFilm));
     }
 
     @Test
