@@ -5,12 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exeption.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -18,36 +19,40 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class FilmController {
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film) {
         log.debug("В метод addFilm передан параметр {}", film);
-        return filmStorage.addFilm(film);
+        return filmService.getInMemoryFilmStorage().addFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film newFilm) {
         log.debug("В метод updateFilm передан параметр {}", newFilm);
-        return filmStorage.updateFilm(newFilm);
+        return filmService.getInMemoryFilmStorage().updateFilm(newFilm);
     }
 
     @GetMapping
     public Collection<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        return filmService.getInMemoryFilmStorage().getAllFilms();
     }
 
     @GetMapping("/{id}")
     public Film getFilmById(@PathVariable Long id) {
         log.debug("В метод getFilmById передан параметр {}", id);
-        return filmStorage.getFilmById(id).get();
+        Optional<Film> filmOptional = filmService.getInMemoryFilmStorage().getFilmById(id);
+        if (filmOptional.isPresent()) {
+            return filmOptional.get();
+        } else {
+            throw new NotFoundException("Фильм с необходимым id не найден.");
+        }
     }
 
     @DeleteMapping
     public void deleteFilm(@Valid @RequestBody Film film) {
         log.debug("В метод deleteFilm передан параметр {}", film);
-        filmStorage.deleteFilm(film);
+        filmService.getInMemoryFilmStorage().deleteFilm(film);
     }
 
     @PutMapping("/{id}/like/{userId}")

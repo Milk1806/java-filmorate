@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTest {
     InMemoryFilmStorage inMemoryFilmStorage = new InMemoryFilmStorage();
-    FilmController filmController = new FilmController(inMemoryFilmStorage, new FilmService(inMemoryFilmStorage, new InMemoryUserStorage()));
+    FilmController filmController = new FilmController(new FilmService(inMemoryFilmStorage, new InMemoryUserStorage()));
     private final Map<Long, Film> films = inMemoryFilmStorage.getFilms();
     private Film film;
     private Film newFilm;

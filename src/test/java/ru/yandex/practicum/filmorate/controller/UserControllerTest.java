@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
     InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
-    UserController userController = new UserController(inMemoryUserStorage, new UserService(inMemoryUserStorage));
+    UserController userController = new UserController(new UserService(inMemoryUserStorage));
     private final Map<Long, User> users = inMemoryUserStorage.getUsers();
     private User user;
     private User newUser;
