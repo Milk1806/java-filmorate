@@ -4,11 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exeption.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -37,7 +39,12 @@ public class UserController {
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
         log.debug("В метод getUserById передан параметр {}", id);
-        return userService.getInMemoryUserStorage().getUserById(id).get();
+        Optional<User> optionalUser = userService.getInMemoryUserStorage().getUserById(id);
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        } else {
+            throw new NotFoundException("Пользователь с необходимым if не найден.");
+        }
     }
 
     @DeleteMapping
