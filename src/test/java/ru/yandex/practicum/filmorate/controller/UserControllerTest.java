@@ -5,8 +5,10 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exeption.ValidationException;
+import ru.yandex.practicum.filmorate.exeption.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -16,8 +18,9 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
-    UserController userController = new UserController();
-    private final Map<Long, User> users = userController.getUsers();
+    InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
+    UserController userController = new UserController(new UserService(inMemoryUserStorage));
+    private final Map<Long, User> users = inMemoryUserStorage.getUsers();
     private User user;
     private User newUser;
     Validator validator;
@@ -89,20 +92,20 @@ class UserControllerTest {
     public void updateUserUnSuccessWithAnotherId() {
         userController.addUser(user);
         newUser.setId(2L);
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test
     public void updateUserUnSuccessWithoutId() {
         userController.addUser(user);
         newUser.setId(null);
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test
     public void updateUserUnSuccessIfUserIdIsMissingInUsersList() {
         newUser.setName("Kate");
-        assertThrows(ValidationException.class, () -> userController.updateUser(newUser));
+        assertThrows(NotFoundException.class, () -> userController.updateUser(newUser));
     }
 
     @Test
